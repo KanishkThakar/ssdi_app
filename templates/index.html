@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSDI Analytics — ML & Statistics Platform</title>
+    <meta name="description" content="A powerful machine learning and statistics platform. Run Naive Bayes classification and one-sample T-Tests with a stunning interface.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        /* ===========================
+           CSS Reset & Custom Properties
+           =========================== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #111128;
+            --bg-card: rgba(20, 20, 50, 0.6);
+            --bg-card-hover: rgba(30, 30, 70, 0.7);
+            --border-glass: rgba(120, 100, 255, 0.15);
+            --border-glass-hover: rgba(120, 100, 255, 0.3);
+            --text-primary: #e8e6ff;
+            --text-secondary: #a0a0c0;
+            --text-muted: #6a6a8a;
+            --accent-1: #7c5cff;
+            --accent-2: #00d4aa;
+            --accent-3: #ff6b9d;
+            --accent-4: #ffd93d;
+            --gradient-1: linear-gradient(135deg, #7c5cff, #00d4aa);
+            --gradient-2: linear-gradient(135deg, #ff6b9d, #ffd93d);
+            --gradient-3: linear-gradient(135deg, #7c5cff, #ff6b9d);
+            --shadow-lg: 0 25px 60px rgba(0,0,0,0.5);
+            --shadow-glow: 0 0 40px rgba(124, 92, 255, 0.15);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 6px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ===========================
+           Animated Background
+           =========================== */
+        .bg-animation {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-orb:nth-child(1) {
+            width: 500px; height: 500px;
+            background: var(--accent-1);
+            top: -100px; left: -100px;
+            animation-delay: 0s;
+        }
+        .bg-orb:nth-child(2) {
+            width: 400px; height: 400px;
+            background: var(--accent-2);
+            top: 50%; right: -100px;
+            animation-delay: -7s;
+            animation-duration: 25s;
+        }
+        .bg-orb:nth-child(3) {
+            width: 350px; height: 350px;
+            background: var(--accent-3);
+            bottom: -50px; left: 30%;
+            animation-delay: -14s;
+            animation-duration: 22s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(60px, -80px) scale(1.1); }
+            50% { transform: translate(-40px, 60px) scale(0.95); }
+            75% { transform: translate(80px, 40px) scale(1.05); }
+        }
+
+        /* Grid pattern overlay */
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            background-image:
+                linear-gradient(rgba(124, 92, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(124, 92, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+
+        /* ===========================
+           Layout
+           =========================== */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px 60px;
+        }
+
+        /* ===========================
+           Header
+           =========================== */
+        .app-header {
+            text-align: center;
+            padding: 40px 0 50px;
+        }
+
+        .logo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 50px;
+            background: rgba(124, 92, 255, 0.1);
+            border: 1px solid rgba(124, 92, 255, 0.25);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--accent-1);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .app-title {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 900;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+            margin-bottom: 12px;
+        }
+
+        .app-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* ===========================
+           Navigation Tabs
+           =========================== */
+        .nav-tabs-custom {
+            display: flex;
+            gap: 6px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            padding: 6px;
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: var(--font-main);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-primary);
+            background: rgba(124, 92, 255, 0.08);
+        }
+
+        .nav-tab.active {
+            background: var(--gradient-1);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(124, 92, 255, 0.4);
+        }
+
+        /* ===========================
+           Glass Card
+           =========================== */
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .glass-card:hover {
+            border-color: var(--border-glass-hover);
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-header-custom {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .card-icon.purple { background: linear-gradient(135deg, rgba(124,92,255,0.2), rgba(124,92,255,0.05)); color: var(--accent-1); }
+        .card-icon.green { background: linear-gradient(135deg, rgba(0,212,170,0.2), rgba(0,212,170,0.05)); color: var(--accent-2); }
+        .card-icon.pink { background: linear-gradient(135deg, rgba(255,107,157,0.2), rgba(255,107,157,0.05)); color: var(--accent-3); }
+
+        .card-title-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        .card-desc-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* ===========================
+           Form Controls
+           =========================== */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label-custom {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-glass);
+            background: rgba(15, 15, 35, 0.8);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.95rem;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.15);
+        }
+
+        .form-input::placeholder { color: var(--text-muted); }
+
+        .form-select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 80px;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* File upload */
+        .file-upload-area {
+            border: 2px dashed var(--border-glass);
+            border-radius: var(--radius-sm);
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-upload-area:hover, .file-upload-area.drag-over {
+            border-color: var(--accent-1);
+            background: rgba(124, 92, 255, 0.05);
+        }
+
+        .file-upload-area input[type="file"] {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-upload-icon {
+            font-size: 2rem;
+            color: var(--accent-1);
+            margin-bottom: 10px;
+        }
+
+        .file-upload-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .file-upload-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .file-name-display {
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: rgba(124, 92, 255, 0.1);
+            border-radius: var(--radius-xs);
+            font-size: 0.85rem;
+            color: var(--accent-1);
+            display: none;
+        }
+
+        /* Checkboxes for features */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 12px;
+            background: rgba(15, 15, 35, 0.5);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-glass);
+        }
+
+        .features-grid::-webkit-scrollbar { width: 6px; }
+        .features-grid::-webkit-scrollbar-track { background: transparent; }
+        .features-grid::-webkit-scrollbar-thumb { background: var(--accent-1); border-radius: 3px; }
+
+        .feature-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.85rem;
+        }
+
+        .feature-checkbox:hover {
+            background: rgba(124, 92, 255, 0.08);
+        }
+
+        .feature-checkbox input[type="checkbox"] {
+            accent-color: var(--accent-1);
+            width: 16px;
+            height: 16px;
+        }
+
+        /* ===========================
+           Buttons
+           =========================== */
+        .btn-primary-custom {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--gradient-1);
+            color: #fff;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary-custom::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(124, 92, 255, 0.4);
+        }
+
+        .btn-primary-custom:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary-custom:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary-custom:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary-custom {
+            padding: 8px 16px;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-xs);
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: var(--font-main);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-secondary-custom:hover {
+            border-color: var(--accent-3);
+            color: var(--accent-3);
+        }
+
+        .btn-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border-glass);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-icon:hover {
+            border-color: var(--accent-3);
+            color: var(--accent-3);
+            background: rgba(255, 107, 157, 0.08);
+        }
+
+        /* ===========================
+           Results
+           =========================== */
+        .results-section {
+            margin-top: 30px;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: rgba(15, 15, 35, 0.6);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-glass-hover);
+            transform: translateY(-3px);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            margin-bottom: 4px;
+        }
+
+        .stat-value.accent-1 { color: var(--accent-1); }
+        .stat-value.accent-2 { color: var(--accent-2); }
+        .stat-value.accent-3 { color: var(--accent-3); }
+        .stat-value.accent-4 { color: var(--accent-4); }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .decision-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .decision-badge.reject {
+            background: rgba(255, 107, 157, 0.15);
+            border: 1px solid rgba(255, 107, 157, 0.3);
+            color: var(--accent-3);
+        }
+
+        .decision-badge.accept {
+            background: rgba(0, 212, 170, 0.15);
+            border: 1px solid rgba(0, 212, 170, 0.3);
+            color: var(--accent-2);
+        }
+
+        .report-block {
+            background: rgba(10, 10, 25, 0.8);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.6;
+        }
+
+        .plot-container {
+            background: rgba(10, 10, 25, 0.5);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            text-align: center;
+        }
+
+        .plot-container img {
+            max-width: 100%;
+            border-radius: var(--radius-xs);
+        }
+
+        /* ===========================
+           History Table
+           =========================== */
+        .history-section {
+            margin-top: 20px;
+        }
+
+        .history-table-wrapper {
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-glass);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .history-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            background: rgba(15, 15, 35, 0.8);
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .history-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(120, 100, 255, 0.06);
+            color: var(--text-secondary);
+        }
+
+        .history-table tr:hover td {
+            background: rgba(124, 92, 255, 0.04);
+        }
+
+        .history-table .acc-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+
+        .acc-good { background: rgba(0,212,170,0.15); color: var(--accent-2); }
+        .acc-ok { background: rgba(255,217,61,0.15); color: var(--accent-4); }
+        .acc-bad { background: rgba(255,107,157,0.15); color: var(--accent-3); }
+
+        /* ===========================
+           Loading Spinner
+           =========================== */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(10, 10, 26, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px; height: 50px;
+            border: 3px solid rgba(124, 92, 255, 0.2);
+            border-top-color: var(--accent-1);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        /* ===========================
+           Section tab panels
+           =========================== */
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ===========================
+           Empty State
+           =========================== */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        /* ===========================
+           Separator
+           =========================== */
+        .section-sep {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+            margin: 24px 0;
+        }
+
+        /* ===========================
+           Responsive
+           =========================== */
+        @media (max-width: 768px) {
+            .app-container { padding: 16px 12px 40px; }
+            .glass-card { padding: 20px; }
+            .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+            .nav-tabs-custom { flex-wrap: wrap; }
+            .nav-tab { font-size: 0.8rem; padding: 10px 14px; }
+            .app-header { padding: 24px 0 30px; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Animated background -->
+    <div class="bg-animation">
+        <div class="bg-orb"></div>
+        <div class="bg-orb"></div>
+        <div class="bg-orb"></div>
+    </div>
+    <div class="bg-grid"></div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Running analysis...</div>
+    </div>
+
+    <div class="app-container">
+
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-badge">
+                <i class="bi bi-graph-up-arrow"></i>
+                SSDI Analytics
+            </div>
+            <h1 class="app-title">ML & Statistics</h1>
+            <p class="app-subtitle">Run Naive Bayes classification and one-sample T-Tests with real-time results and PostgreSQL-backed history.</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs-custom" id="mainNav">
+            <button class="nav-tab active" data-tab="classify" id="nav-classify">
+                <i class="bi bi-cpu"></i> Classify
+            </button>
+            <button class="nav-tab" data-tab="ttest" id="nav-ttest">
+                <i class="bi bi-calculator"></i> T-Test
+            </button>
+            <button class="nav-tab" data-tab="history" id="nav-history">
+                <i class="bi bi-clock-history"></i> History
+            </button>
+        </div>
+
+        <!-- ===========================
+             TAB 1: Classification
+             =========================== -->
+        <div class="tab-panel active" id="panel-classify">
+            <div class="glass-card">
+                <div class="card-header-custom">
+                    <div class="card-icon purple"><i class="bi bi-diagram-3-fill"></i></div>
+                    <div>
+                        <div class="card-title-text">Naive Bayes Classifier</div>
+                        <div class="card-desc-text">Upload CSV data and run Gaussian Naive Bayes classification</div>
+                    </div>
+                </div>
+
+                <form id="classifyForm">
+                    <!-- File Upload -->
+                    <div class="form-group">
+                        <label class="form-label-custom">Dataset</label>
+                        <div class="file-upload-area" id="fileDropArea">
+                            <input type="file" name="file" id="csvFileInput" accept=".csv">
+                            <div class="file-upload-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+                            <div class="file-upload-text">Drop your CSV file here or click to browse</div>
+                            <div class="file-upload-hint">Max 16MB • CSV format only</div>
+                        </div>
+                        <div class="file-name-display" id="fileNameDisplay"></div>
+                    </div>
+
+                    <!-- Target Column -->
+                    <div class="form-group">
+                        <label class="form-label-custom" for="targetSelect">Target Column</label>
+                        <select name="target" id="targetSelect" class="form-select" disabled>
+                            <option value="">Upload a file to see columns...</option>
+                            {% for col in columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Feature Columns -->
+                    <div class="form-group">
+                        <label class="form-label-custom">Feature Columns</label>
+                        <div class="features-grid" id="featuresGrid">
+                            {% for col in columns %}
+                            <label class="feature-checkbox">
+                                <input type="checkbox" name="features" value="{{ col }}">
+                                {{ col }}
+                            </label>
+                            {% endfor %}
+                            {% if not columns %}
+                            <div class="empty-state" style="grid-column: 1/-1; padding: 20px;">
+                                <i class="bi bi-file-earmark-spreadsheet" style="font-size:1.5rem;"></i>
+                                <div>Upload a file to see columns</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Parameters -->
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label-custom" for="testSize">Test Size</label>
+                            <input type="number" name="test_size" id="testSize" class="form-input"
+                                   value="0.2" min="0.05" max="0.5" step="0.05">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label-custom" for="randomSeed">Random Seed</label>
+                            <input type="number" name="seed" id="randomSeed" class="form-input"
+                                   value="42" min="1">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary-custom" id="classifyBtn">
+                        <i class="bi bi-play-fill"></i> Run Classification
+                    </button>
+                </form>
+
+                <!-- Classification Results -->
+                <div id="classifyResults" class="results-section" style="display:none;">
+                    <div class="section-sep"></div>
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-value accent-2" id="resAccuracy">—</div>
+                            <div class="stat-label">Accuracy</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value accent-1" id="resDataset">—</div>
+                            <div class="stat-label">Dataset</div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid" style="margin-bottom: 0;">
+                        <div>
+                            <label class="form-label-custom">Confusion Matrix</label>
+                            <div class="plot-container">
+                                <img id="resPlot" src="" alt="Confusion Matrix Heatmap">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label-custom">Classification Report</label>
+                            <div class="report-block" id="resReport"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===========================
+             TAB 2: T-Test
+             =========================== -->
+        <div class="tab-panel" id="panel-ttest">
+            <div class="glass-card">
+                <div class="card-header-custom">
+                    <div class="card-icon green"><i class="bi bi-bar-chart-line-fill"></i></div>
+                    <div>
+                        <div class="card-title-text">One-Sample T-Test</div>
+                        <div class="card-desc-text">Test whether a sample mean differs from a hypothesized value</div>
+                    </div>
+                </div>
+
+                <form id="ttestForm">
+                    <div class="form-group">
+                        <label class="form-label-custom" for="ttestData">Sample Data (comma-separated)</label>
+                        <textarea class="form-input" name="data" id="ttestData"
+                                  placeholder="e.g. 10, 12, 9, 11, 10, 13, 12">10, 12, 9, 11, 10, 13, 12</textarea>
+                    </div>
+
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label class="form-label-custom" for="ttestMu">Null Mean (μ₀)</label>
+                            <input type="number" name="mu0" id="ttestMu" class="form-input"
+                                   value="10" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label-custom" for="ttestAlpha">Significance (α)</label>
+                            <input type="number" name="alpha" id="ttestAlpha" class="form-input"
+                                   value="0.05" min="0.01" max="0.10" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label-custom" for="ttestAlt">Alternative</label>
+                            <select name="alternative" id="ttestAlt" class="form-select">
+                                <option value="two-sided">Two-sided</option>
+                                <option value="greater">Greater</option>
+                                <option value="less">Less</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary-custom" id="ttestBtn">
+                        <i class="bi bi-lightning-fill"></i> Run T-Test
+                    </button>
+                </form>
+
+                <!-- T-Test Results -->
+                <div id="ttestResults" class="results-section" style="display:none;">
+                    <div class="section-sep"></div>
+
+                    <div style="text-align:center; margin-bottom: 20px;">
+                        <span class="decision-badge" id="ttestDecision"></span>
+                    </div>
+
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-value accent-1" id="resMean">—</div>
+                            <div class="stat-label">Sample Mean (x̄)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value accent-2" id="resStd">—</div>
+                            <div class="stat-label">Std Dev (s)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value accent-4" id="resTStat">—</div>
+                            <div class="stat-label">T-Statistic</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value accent-3" id="resPVal">—</div>
+                            <div class="stat-label">P-Value</div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" style="font-size:1.2rem; color: var(--text-primary);" id="resDf">—</div>
+                            <div class="stat-label">Degrees of Freedom</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" style="font-size:1.2rem; color: var(--text-primary);" id="resAlpha">—</div>
+                            <div class="stat-label">Significance Level</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===========================
+             TAB 3: History
+             =========================== -->
+        <div class="tab-panel" id="panel-history">
+            <!-- Classification History -->
+            <div class="glass-card" style="margin-bottom: 20px;">
+                <div class="card-header-custom">
+                    <div class="card-icon purple"><i class="bi bi-database-fill"></i></div>
+                    <div>
+                        <div class="card-title-text">Classification History</div>
+                        <div class="card-desc-text">Past Naive Bayes runs stored in PostgreSQL</div>
+                    </div>
+                </div>
+
+                <div id="classHistoryContent">
+                    <div class="empty-state" id="classHistoryEmpty">
+                        <i class="bi bi-inbox"></i>
+                        <p>No classification results yet. Run a model to see history here.</p>
+                    </div>
+                    <div class="history-table-wrapper" id="classHistoryTable" style="display:none;">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Dataset</th>
+                                    <th>Target</th>
+                                    <th>Accuracy</th>
+                                    <th>Test Size</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="classHistoryBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- T-Test History -->
+            <div class="glass-card">
+                <div class="card-header-custom">
+                    <div class="card-icon green"><i class="bi bi-database-fill"></i></div>
+                    <div>
+                        <div class="card-title-text">T-Test History</div>
+                        <div class="card-desc-text">Past T-Test calculations stored in PostgreSQL</div>
+                    </div>
+                </div>
+
+                <div id="ttestHistoryContent">
+                    <div class="empty-state" id="ttestHistoryEmpty">
+                        <i class="bi bi-inbox"></i>
+                        <p>No T-Test results yet. Run a test to see history here.</p>
+                    </div>
+                    <div class="history-table-wrapper" id="ttestHistoryTable" style="display:none;">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Null Mean</th>
+                                    <th>T-Statistic</th>
+                                    <th>P-Value</th>
+                                    <th>Decision</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="ttestHistoryBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===========================
+         JavaScript
+         =========================== -->
+    <script>
+        // ---- Tab Navigation ----
+        const tabs = document.querySelectorAll('.nav-tab');
+        const panels = document.querySelectorAll('.tab-panel');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                panels.forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+
+                if (tab.dataset.tab === 'history') loadHistory();
+            });
+        });
+
+        // ---- File Upload ----
+        const fileInput = document.getElementById('csvFileInput');
+        const fileDropArea = document.getElementById('fileDropArea');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const targetSelect = document.getElementById('targetSelect');
+        const featuresGrid = document.getElementById('featuresGrid');
+
+        fileInput.addEventListener('change', handleFileSelect);
+        fileDropArea.addEventListener('dragover', e => { e.preventDefault(); fileDropArea.classList.add('drag-over'); });
+        fileDropArea.addEventListener('dragleave', () => fileDropArea.classList.remove('drag-over'));
+        fileDropArea.addEventListener('drop', e => {
+            e.preventDefault();
+            fileDropArea.classList.remove('drag-over');
+            fileInput.files = e.dataTransfer.files;
+            handleFileSelect();
+        });
+
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            fileNameDisplay.textContent = '📄 ' + file.name;
+            fileNameDisplay.style.display = 'block';
+
+            // Get columns from the uploaded file
+            const fd = new FormData();
+            fd.append('file', file);
+
+            fetch('/columns', { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.columns) {
+                        populateColumns(data.columns);
+                    }
+                })
+                .catch(err => console.error('Error getting columns:', err));
+        }
+
+        function populateColumns(columns) {
+            // Target select
+            targetSelect.innerHTML = '<option value="">Select target column...</option>';
+            columns.forEach(col => {
+                const opt = document.createElement('option');
+                opt.value = col;
+                opt.textContent = col;
+                targetSelect.appendChild(opt);
+            });
+            targetSelect.disabled = false;
+
+            // Features grid
+            featuresGrid.innerHTML = '';
+            columns.forEach(col => {
+                const label = document.createElement('label');
+                label.className = 'feature-checkbox';
+                label.innerHTML = `<input type="checkbox" name="features" value="${col}"> ${col}`;
+                featuresGrid.appendChild(label);
+            });
+        }
+
+        // If columns were pre-populated (from server-side template)
+        {% if columns %}
+        (function() {
+            targetSelect.disabled = false;
+        })();
+        {% endif %}
+
+        // ---- Classification Form ----
+        document.getElementById('classifyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('classifyBtn');
+            const overlay = document.getElementById('loadingOverlay');
+
+            btn.disabled = true;
+            overlay.classList.add('show');
+            overlay.querySelector('.loading-text').textContent = 'Running Naive Bayes classification...';
+
+            try {
+                const formData = new FormData(e.target);
+                // Re-attach the file since FormData may not pick it up from the custom area
+                if (fileInput.files[0]) {
+                    formData.set('file', fileInput.files[0]);
+                }
+
+                const res = await fetch('/classify', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                overlay.classList.remove('show');
+                btn.disabled = false;
+
+                if (data.error) {
+                    showToast(data.error, 'error');
+                    return;
+                }
+
+                // Show results
+                const results = document.getElementById('classifyResults');
+                results.style.display = 'block';
+
+                animateValue('resAccuracy', data.accuracy);
+                document.getElementById('resDataset').textContent = data.dataset;
+                document.getElementById('resDataset').style.fontSize = '0.9rem';
+                document.getElementById('resPlot').src = 'data:image/png;base64,' + data.plot;
+                document.getElementById('resReport').textContent = data.report;
+
+                results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            } catch (err) {
+                overlay.classList.remove('show');
+                btn.disabled = false;
+                showToast('Network error. Please try again.', 'error');
+            }
+        });
+
+        // ---- T-Test Form ----
+        document.getElementById('ttestForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('ttestBtn');
+            const overlay = document.getElementById('loadingOverlay');
+
+            btn.disabled = true;
+            overlay.classList.add('show');
+            overlay.querySelector('.loading-text').textContent = 'Computing T-Test...';
+
+            try {
+                const formData = new FormData(e.target);
+                const res = await fetch('/ttest', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                overlay.classList.remove('show');
+                btn.disabled = false;
+
+                if (data.error) {
+                    showToast(data.error, 'error');
+                    return;
+                }
+
+                // Show results
+                const results = document.getElementById('ttestResults');
+                results.style.display = 'block';
+
+                animateValue('resMean', data.sample_mean);
+                animateValue('resStd', data.sample_std);
+                animateValue('resTStat', data.t_statistic);
+                animateValue('resPVal', data.p_value);
+                document.getElementById('resDf').textContent = data.degrees_of_freedom;
+                document.getElementById('resAlpha').textContent = document.getElementById('ttestAlpha').value;
+
+                const badge = document.getElementById('ttestDecision');
+                badge.textContent = (data.reject ? '✗ ' : '✓ ') + data.decision;
+                badge.className = 'decision-badge ' + (data.reject ? 'reject' : 'accept');
+
+                results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            } catch (err) {
+                overlay.classList.remove('show');
+                btn.disabled = false;
+                showToast('Network error. Please try again.', 'error');
+            }
+        });
+
+        // ---- History ----
+        async function loadHistory() {
+            try {
+                const res = await fetch('/history');
+                const data = await res.json();
+
+                if (data.error) {
+                    showToast(data.error, 'error');
+                    return;
+                }
+
+                // Classification history
+                const classBody = document.getElementById('classHistoryBody');
+                const classTable = document.getElementById('classHistoryTable');
+                const classEmpty = document.getElementById('classHistoryEmpty');
+
+                if (data.classifications.length > 0) {
+                    classEmpty.style.display = 'none';
+                    classTable.style.display = 'block';
+                    classBody.innerHTML = data.classifications.map(r => {
+                        const acc = parseFloat(r.accuracy);
+                        const cls = acc >= 0.8 ? 'acc-good' : acc >= 0.6 ? 'acc-ok' : 'acc-bad';
+                        return `<tr>
+                            <td>${r.date}</td>
+                            <td>${r.dataset}</td>
+                            <td>${r.target}</td>
+                            <td><span class="acc-badge ${cls}">${r.accuracy}</span></td>
+                            <td>${r.test_size}</td>
+                            <td><button class="btn-icon" onclick="deleteRecord('classification',${r.id})" title="Delete"><i class="bi bi-trash3"></i></button></td>
+                        </tr>`;
+                    }).join('');
+                } else {
+                    classEmpty.style.display = 'block';
+                    classTable.style.display = 'none';
+                }
+
+                // T-Test history
+                const ttBody = document.getElementById('ttestHistoryBody');
+                const ttTable = document.getElementById('ttestHistoryTable');
+                const ttEmpty = document.getElementById('ttestHistoryEmpty');
+
+                if (data.ttests.length > 0) {
+                    ttEmpty.style.display = 'none';
+                    ttTable.style.display = 'block';
+                    ttBody.innerHTML = data.ttests.map(r => {
+                        const isReject = r.decision.includes('Reject H');
+                        return `<tr>
+                            <td>${r.date}</td>
+                            <td>${r.null_mean}</td>
+                            <td>${r.t_statistic}</td>
+                            <td>${r.p_value}</td>
+                            <td><span class="decision-badge ${isReject && !r.decision.includes('Fail') ? 'reject' : 'accept'}" style="font-size:0.75rem; padding:4px 12px;">${r.decision}</span></td>
+                            <td><button class="btn-icon" onclick="deleteRecord('ttest',${r.id})" title="Delete"><i class="bi bi-trash3"></i></button></td>
+                        </tr>`;
+                    }).join('');
+                } else {
+                    ttEmpty.style.display = 'block';
+                    ttTable.style.display = 'none';
+                }
+
+            } catch (err) {
+                console.error('Error loading history:', err);
+            }
+        }
+
+        async function deleteRecord(type, id) {
+            if (!confirm('Delete this record?')) return;
+            try {
+                await fetch(`/history/${type}/${id}`, { method: 'DELETE' });
+                loadHistory();
+                showToast('Record deleted.', 'success');
+            } catch (err) {
+                showToast('Failed to delete.', 'error');
+            }
+        }
+
+        // ---- Animated Value Counter ----
+        function animateValue(elementId, targetValue) {
+            const el = document.getElementById(elementId);
+            const target = parseFloat(targetValue);
+
+            if (isNaN(target)) {
+                el.textContent = targetValue;
+                return;
+            }
+
+            const duration = 800;
+            const fps = 60;
+            const frames = duration / (1000 / fps);
+            let frame = 0;
+
+            const counter = setInterval(() => {
+                frame++;
+                const progress = frame / frames;
+                const ease = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+                const current = (target * ease).toFixed(targetValue.includes('.') ? targetValue.split('.')[1].length : 0);
+                el.textContent = current;
+
+                if (frame >= frames) {
+                    el.textContent = targetValue;
+                    clearInterval(counter);
+                }
+            }, 1000 / fps);
+        }
+
+        // ---- Toast Notifications ----
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; bottom: 30px; right: 30px; z-index: 10000;
+                padding: 14px 24px; border-radius: 12px;
+                font-family: var(--font-main); font-size: 0.9rem; font-weight: 500;
+                color: #fff; max-width: 400px;
+                animation: fadeInUp 0.3s ease-out;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            `;
+
+            if (type === 'error') {
+                toast.style.background = 'linear-gradient(135deg, #ff4757, #ff6b9d)';
+            } else if (type === 'success') {
+                toast.style.background = 'linear-gradient(135deg, #00b894, #00d4aa)';
+            } else {
+                toast.style.background = 'linear-gradient(135deg, #7c5cff, #a78bfa)';
+            }
+
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOutDown 0.3s ease-out forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Add fadeOutDown animation
+        const style = document.createElement('style');
+        style.textContent = `@keyframes fadeOutDown { to { opacity: 0; transform: translateY(20px); } }`;
+        document.head.appendChild(style);
+    </script>
+
+</body>
+</html>
